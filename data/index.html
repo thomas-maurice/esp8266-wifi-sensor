@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Admin interface and shit</title>
+    <link rel="stylesheet" href="chart.css">
+    <link rel="stylesheet" href="bootstrap.css">
+    <script src="chart.js"></script>
+    <script src="jquery.js"></script>
+    <script src="bootstrap.js"></script>
+    <script src="notify.js"></script>
+    <script>
+        function updateInfoTab() {
+            $.getJSON("infos.json", function(data) {
+                $("#mac").text(data["mac"]);
+                $("#summary_mac").text(data["mac"]);
+                $("#summary_name").text(data["name"]);
+                $("#name").text(data["name"]);
+                $("#ipaddress").text(data["address"]);
+                $("#temperature").text(data["temperature"]);
+                $("#humidity").text(data["humidity"]);
+                $("#wifi_status").text(data["wifi_status"]);
+                $("#led_status").text(data["led_on"]);
+            }).fail(function(jqxhr, textStatus, error) {
+                $.notify("Could not get updates from the device: " + textStatus, "error");
+            });
+        }
+
+        function updateConfigTab() {
+            $.getJSON("config", function(data) {
+                $("#configSSID").val(data["ssid"]);
+                $("#configPassword").val(data["pwd"]);
+                $("#configEndpoint").val(data["endpoint"]);
+                $("#configName").val(data["name"]);
+            }).fail(function(jqxhr, textStatus, error) {
+                $.notify("Could not get the configuration of the device: " + textStatus, "error");
+            });
+        }
+
+        function updateCharts() {
+            $.getJSON("metrics.json", function(data) {
+                var ctxTemp = document.getElementById('tempChart').getContext('2d');
+                var ctxHum = document.getElementById('humChart').getContext('2d');
+                var labels = Array(data["t"].length);
+                var chart = new Chart(ctxTemp, {
+                    // The type of chart we want to create
+                    type: 'line',
+
+                    // The data for our dataset
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Temperature',
+                            backgroundColor: 'rgb(255, 99, 132)',
+                            borderColor: 'rgb(255, 99, 132)',
+                            data: data["t"].reverse(),
+                        }]
+                    },
+
+                    // Configuration options go here
+                    options: {}
+                });
+                var chart = new Chart(ctxHum, {
+                    // The type of chart we want to create
+                    type: 'line',
+
+                    // The data for our dataset
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Humidity',
+                            backgroundColor: 'rgb(0, 99, 132)',
+                            borderColor: 'rgb(0, 99, 132)',
+                            data: data["h"].reverse(),
+                        }]
+                    },
+
+                    // Configuration options go here
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                ticks: {
+                                    suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                                    beginAtZero: true   // minimum value will be 0.
+                                }
+                            }]
+                        }
+                    }
+                });
+            }).fail(function(jqxhr, textStatus, error) {
+                $.notify("Could not get metrics: " + textStatus, "error");
+            });
+        }
+
+        $(document).ready(function(){
+            updateInfoTab();
+            updateCharts();
+            updateConfigTab();
+            setInterval(updateInfoTab, 10000);
+            setInterval(updateCharts, 62000);
+            setInterval(updateConfigTab, 600000);
+            $("#reboot_button").click(function() {
+                $.notify("Asking the device to reboot", "info");
+                $.getJSON("reboot", function(data) {
+                    $.notify("Asked to the device to reboot", "success");
+                }).fail(function(jqxhr, textStatus, error) {
+                    $.notify("Failed to reboot the device: " + textStatus, "error");
+                });
+            });
+            $("#toggle_led_button").click(function() {
+                $.notify("Toggling LED", "info");
+                $.getJSON("toggle_led", function(data) {
+                    $.notify("Successfully toggled LED", "success");
+                    $("#led_status").text(data["led_on"]);
+                }).fail(function(jqxhr, textStatus, error) {
+                    $.notify("Failed to toggle the LED: " + textStatus, "error");
+                });
+            });
+        });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+        <h1><i class="fa fa-camera-retro fa-lg"></i>Device: <span id="mac"></span> (<span id="name"></span>)</h1>
+        <ul class="nav nav-tabs" role="tablist" id="mainTab">
+            <li class="nav-item">
+                <a class="nav-link active" id="summary-tab" data-toggle="tab" href="#nav-summary" role="tab" aria-controls="summary" aria-selected="true">Summary</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="data-tab" data-toggle="tab" href="#nav-data" role="tab" aria-controls="data" aria-selected="false">Data</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="config-tab" data-toggle="tab" href="#nav-config" role="tab" aria-controls="config" aria-selected="false">Configuration</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="reboot-tab" data-toggle="tab" href="#nav-reboot" role="tab" aria-controls="reboot" aria-selected="false">Reboot</a>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="nav-summary" role="tabpanel" aria-labelledby="summary-tab">
+                <div class="container">
+                    <h2>Device informations</h2>
+                    <ul>
+                        <li>Name: <span id="summary_name"></span></li>
+                        <li>IP address: <span id="ipaddress"></span></li>
+                        <li>MAC address: <span id="summary_mac"></span></li>
+                        <li>WiFi status: <span id="wifi_status"></span></li>
+                        <li>Humidity: <span id="humidity"></span>%</li>
+                        <li>Temperature: <span id="temperature"></span>°C</li>
+                        <li>LED is on: <span id="led_status"></span></li>
+                    </ul>
+                    <button type="button" class="btn btn-info btn-lg btn-block" id="toggle_led_button">Toggle LED state</button>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-data" role="tabpanel" aria-labelledby="data-tab">
+                    <canvas id="tempChart" height="100%"></canvas>
+                    <canvas id="humChart" height="100%"></canvas>
+            </div>
+            <div class="tab-pane fade" id="nav-config" role="tabpanel" aria-labelledby="config-tab">
+                <div class="alert alert-warning mt-2">Note that any update to the configuration requires a reboot because I am a lazy piece of shit that couldn't be bothered to implement hot reload</div>
+                <form action="/update_config" method="POST">
+                    <div class="form-group">
+                        <label for="configSSID">Wireless network</label>
+                        <input type="text" name="ssid" class="form-control" id="configSSID" aria-describedby="configSSIDHelp" placeholder="Enter SSID">
+                        <small id="configSSIDHelp" class="form-text text-muted">SSID to connect to</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="configPassword">Password</label>
+                        <input type="password" name="password" class="form-control" id="configPassword" placeholder="Password">
+                    </div>
+                    <div class="form-group">
+                        <label for="configEndpoint">Endpoint to report metrics</label>
+                        <input type="text" class="form-control" name="endpoint" id="configEndpoint" placeholder="Enter endpoint">
+                    </div>
+                    <div class="form-group">
+                        <label for="configEndpoint">Device name</label>
+                        <input type="text" class="form-control" name="name" id="configName" placeholder="Enter a name">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="configUpdateButton">Update</button>
+                  </form>
+            </div>
+            <div class="tab-pane fade" id="nav-reboot" role="tabpanel" aria-labelledby="reboot-tab">
+                <div class="container">
+                    <div class="alert alert-danger mt-2">Be careful, this will reboot the device without asking for confirmation !</div>
+                    <center><button type="button" class="btn btn-danger" id="reboot_button">Fuck off mate I know what I'm doing</button></center>
+                </div>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>
