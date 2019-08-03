@@ -40,6 +40,27 @@ you first flash the chip with the firmware.
 * Some authentication
 * Sending metrics over MQTT instead/in conjunction with HTTP
 
+# Some pictures
+The device itself
+
+![The device itself](https://github.com/thomas-maurice/esp8266-wifi-sensor/raw/master/images/sensor.png)
+
+The UI landing page
+
+![Landing page](https://github.com/thomas-maurice/esp8266-wifi-sensor/raw/master/images/screen1.png)
+
+Some graphs idk
+
+![Some graphs](https://github.com/thomas-maurice/esp8266-wifi-sensor/raw/master/images/screen2.png)
+
+The configuration page
+
+![Configuration page](https://github.com/thomas-maurice/esp8266-wifi-sensor/raw/master/images/screen3.png)
+
+The reboot page
+
+![Reboot page](https://github.com/thomas-maurice/esp8266-wifi-sensor/raw/master/images/screen4.png)
+
 # How do I install it ?
 ## The circuit
 The setup is fairly simple:
