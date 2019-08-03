@@ -1,4 +1,4 @@
-# ESP8266 WiFi Temperature sensor
+# ESP8266 WiFi temperature & humidity sensor
 
 This is a sensor I've been working on to play around with the ESP8266
 WiFi board. Its main goal is to survey on a regular basis the temperature
